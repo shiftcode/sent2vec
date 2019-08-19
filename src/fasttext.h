@@ -62,6 +62,7 @@ class FastText {
     void saveDict();
 
     void loadModel(const std::string&, const bool inference_mode = false, const int timeout_sec = -1);
+    void loadModel(char* modelBytes, size_t size);
     void loadModel(std::istream&);
     void loadModelForInference(std::istream&, const std::string&, const int);
     void loadDict(const std::string&);

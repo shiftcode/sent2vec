@@ -17,9 +17,10 @@ cnp.import_array()
 
 cdef extern from "fasttext.h" namespace "fasttext":
 
-    cdef cppclass FastText:
+    cdef cppclass FastText nogil:
         FastText() except +
         void loadModel(const string&, bool, int)
+        void loadModel(char* , size_t )
         void textVector(string, vector[float]&)
         void textVectors(vector[string]&, int, vector[float])#&)
         int getDimension()
@@ -85,11 +86,18 @@ cdef class Sent2vecModel:
     def get_emb_size(self):
         return self._thisptr.getDimension()
 
-    def load_model(self, model_path, inference_mode=False, timeout_sec=-1):
-        cdef string cmodel_path = model_path.encode('utf-8', 'ignore');
-        cdef bool cinference_mode = inference_mode
-        cdef int ctimeout_sec = timeout_sec
-        self._thisptr.loadModel(cmodel_path, cinference_mode, ctimeout_sec)
+    def load_model(self, model):
+        cdef string cmodel_path;
+        cdef char* cmodel;
+        if type(model) == bytes:
+            model_size = len(model)
+            cmodel = model
+            with nogil:
+                self._thisptr.loadModel(cmodel, model_size)
+        else:
+            cmodel_path = model.encode('utf-8', 'ignore')
+            with nogil:
+                self._thisptr.loadModel(cmodel_path, False, -1)
 
     def embed_sentences(self, sentences, num_threads=1):
         if num_threads <= 0:
