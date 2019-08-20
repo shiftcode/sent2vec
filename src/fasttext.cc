@@ -249,7 +249,7 @@ void FastText::loadModelFromS3(const std::string& filename, const std::string& b
        // Get an Aws::IOStream reference to the retrieved file
        auto &retrieved_file = get_object_outcome.GetResultWithOwnership().GetBody();
 
-       // std::cout << "checking model" << std::endl;
+       std::cout << "checking model" << std::endl;
        if (!checkModel(retrieved_file)) {
           std::cerr << "Invalid file format" << std::endl;
           exit(EXIT_FAILURE);
