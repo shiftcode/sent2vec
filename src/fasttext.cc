@@ -25,6 +25,11 @@
 #include <streambuf>
 #include <istream>
 
+#include <fstream>
+#include <aws/core/Aws.h>
+#include <aws/s3/S3Client.h>
+#include <aws/s3/model/GetObjectRequest.h>
+#include <aws/core/client/ClientConfiguration.h>
 
 namespace fasttext {
 
@@ -215,6 +220,53 @@ void FastText::saveModel(int32_t checkpoint) {
   }
 
   ofs.close();
+}
+
+void FastText::loadModelFromS3(const std::string& filename, const std::string& bucketname, const std::string& region_name) {
+
+  Aws::SDKOptions options;
+  options.loggingOptions.logLevel = Aws::Utils::Logging::LogLevel::Info;
+
+  Aws::InitAPI(options);
+  {
+    // Assign these values before running the program
+    const Aws::String bucket_name(bucketname.c_str(), bucketname.size());
+    const Aws::String object_name(filename.c_str(), filename.size());
+
+    // Set up the request
+    Aws::Client::ClientConfiguration config;
+    config.region = region_name;
+    Aws::S3::S3Client s3_client(config);
+    Aws::S3::Model::GetObjectRequest object_request;
+    object_request.SetBucket(bucket_name);
+    object_request.SetKey(object_name);
+
+    // Get the object
+    std::cout << "fetching from s3" << std::endl;
+    auto get_object_outcome = s3_client.GetObject(object_request);
+    if (get_object_outcome.IsSuccess())
+    {
+       // Get an Aws::IOStream reference to the retrieved file
+       auto &retrieved_file = get_object_outcome.GetResultWithOwnership().GetBody();
+
+       // std::cout << "checking model" << std::endl;
+       if (!checkModel(retrieved_file)) {
+          std::cerr << "Invalid file format" << std::endl;
+          exit(EXIT_FAILURE);
+       }
+       std::cout << "loading model" << std::endl;
+       loadModel(retrieved_file);
+       std::cout << "loaded model" << std::endl;
+    }
+    else
+    {
+       auto error = get_object_outcome.GetError();
+       std::cout << "ERROR: " << error.GetExceptionName() << ": "
+           << error.GetMessage() << std::endl;
+       exit(EXIT_FAILURE);
+    }
+  }
+  Aws::ShutdownAPI(options);
 }
 
 void FastText::loadModel(const std::string& filename,

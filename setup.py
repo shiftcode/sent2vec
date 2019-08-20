@@ -18,9 +18,9 @@ sourcefiles  = ['src/sent2vec.pyx',
                 'src/real.cc',
                 'src/productquantizer.cc']
 compile_opts = ['-std=c++0x', '-Wno-cpp', '-pthread', '-Wno-sign-compare']
-libraries = ['rt']
+libraries = ['rt', 'aws-cpp-sdk-s3']
 if sys.platform == 'darwin':
-    libraries = []
+    libraries = ['aws-cpp-sdk-s3']
 ext=[Extension('*',
             sourcefiles,
             extra_compile_args=compile_opts,

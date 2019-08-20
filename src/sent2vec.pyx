@@ -17,10 +17,11 @@ cnp.import_array()
 
 cdef extern from "fasttext.h" namespace "fasttext":
 
-    cdef cppclass FastText nogil:
+    cdef cppclass FastText:
         FastText() except +
         void loadModel(const string&, bool, int)
         void loadModel(char* , size_t )
+        void loadModelFromS3(const string&, const string&, const string&)
         void textVector(string, vector[float]&)
         void textVectors(vector[string]&, int, vector[float])#&)
         int getDimension()
@@ -86,18 +87,23 @@ cdef class Sent2vecModel:
     def get_emb_size(self):
         return self._thisptr.getDimension()
 
-    def load_model(self, model):
+    def load_model(self, model, inference_mode=False, timeout_sec=-1):
         cdef string cmodel_path;
+        cdef string cfilename;
+        cdef string cbucketname;
+        cdef string cregion;
         cdef char* cmodel;
-        if type(model) == bytes:
-            model_size = len(model)
-            cmodel = model
-            with nogil:
-                self._thisptr.loadModel(cmodel, model_size)
+        cdef bool cinference_mode = inference_mode
+        cdef int ctimeout_sec = timeout_sec
+        if model.startswith('s3:'):
+            parts = model.split(':')
+            cregion = parts[1].encode('utf-8', 'ignore')
+            cfilename = parts[3].encode('utf-8', 'ignore')
+            cbucketname = parts[2].encode('utf-8', 'ignore')
+            self._thisptr.loadModelFromS3(cfilename, cbucketname, cregion)
         else:
             cmodel_path = model.encode('utf-8', 'ignore')
-            with nogil:
-                self._thisptr.loadModel(cmodel_path, False, -1)
+            self._thisptr.loadModel(cmodel_path, cinference_mode, ctimeout_sec)
 
     def embed_sentences(self, sentences, num_threads=1):
         if num_threads <= 0:

@@ -64,6 +64,7 @@ class FastText {
     void loadModel(const std::string&, const bool inference_mode = false, const int timeout_sec = -1);
     void loadModel(char* modelBytes, size_t size);
     void loadModel(std::istream&);
+    void loadModelFromS3(const std::string&, const std::string&, const std::string&);
     void loadModelForInference(std::istream&, const std::string&, const int);
     void loadDict(const std::string&);
     void loadDict(std::istream&);
