@@ -232,10 +232,11 @@ void FastText::loadModelFromS3(const std::string& filename, const std::string& b
     // Assign these values before running the program
     const Aws::String bucket_name(bucketname.c_str(), bucketname.size());
     const Aws::String object_name(filename.c_str(), filename.size());
+    const Aws::String aws_region(region_name.c_str(), region_name.size());
 
     // Set up the request
     Aws::Client::ClientConfiguration config;
-    config.region = region_name;
+    config.region = aws_region;
     Aws::S3::S3Client s3_client(config);
     Aws::S3::Model::GetObjectRequest object_request;
     object_request.SetBucket(bucket_name);
